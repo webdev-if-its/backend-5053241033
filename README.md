@@ -27,15 +27,15 @@ Kalau dosen memperbaiki sesuatu di pertemuan yang sudah dirilis (mis. ada bug di
 Bagian di bawah ini **isi bertahap** sesuai level yang sedang kalian kerjakan (lihat `pertemuan-01/SOAL.md`) — heading-nya dicek otomatis, jangan diganti namanya.
 
 ## Identitas
-- Nama: (tulis di sini)
-- NRP: (tulis di sini)
-- Kelas: (tulis di sini)
+- Nama:Arya Ramadhan
+- NRP:5053241033
+- Kelas:M
 
 ## Commit vs Push
-(tulis di sini)
+git commit menyimpan perubahan file ke dalam riwayat lokal komputer kita. Sedangkan git push dia mengirim commit ke repositori remote di GitHub. Jika seseorang commit tetapi lupa di push, perubahan kode tidak akan terlihat oleh rekan tim sehingga mereka tidak bisa melanjutkan pekerjaan.
 
 ## Reproducibility
-(tulis di sini)
+Reproducibility adalah program yang kita buat bisa dijalankan oleh orang lain dan hasilnya sama seperti punya kita sendiri. Tapi jika anggota tim menggunakkan go yang beda versi, akan terjadi errror karena mungkin ada sintaks atau fungsi baru yang tidak didukung di versi go lama
 
 ## Catatan Merge Conflict
 (tulis di sini)
