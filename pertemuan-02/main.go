@@ -10,18 +10,18 @@ func HitungSubtotal(qty int, hargaSatuan float64) float64 {
 }
 
 func HitungTotalPesanan(qty []int, hargaSatuan []float64) float64 {
-	if len(qty) != len(hargaSatuan){
+	if len(qty) != len(hargaSatuan) {
 		return 0
 	}
 	var total float64
-	for i := 0; i < len(qty); i++{
+	for i := 0; i < len(qty); i++ {
 		total += HitungSubtotal(qty[i], hargaSatuan[i])
 	}
 	return total
 }
 
 func TerapkanPajak(total float64, tarifPajak float64) float64 {
-	panic("belum diimplementasikan")
+	return total * (1 + tarifPajak)
 }
 
 func HitungDiskon(total float64) float64 {
