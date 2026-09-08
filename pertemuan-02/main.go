@@ -42,15 +42,41 @@ func TotalSetelahDiskon(qty []int, hargaSatuan []float64, tarifPajak float64) fl
 }
 
 func ValidasiPesanan(qty []int, hargaSatuan []float64) (bool, string) {
-	panic("belum diimplementasikan")
+	if len(qty) != len(hargaSatuan) {
+		return false, "Jumlah item di daftar qty dan hargasatuan tidak sama"
+	}
+	for i := 0; i < len(qty); i++ {
+		if qty[i] <= 0 {
+			return false, fmt.Sprintf("qty pada index %d harus bilangan positif", i)
+		}
+		if hargaSatuan[i] <= 0 {
+			return false, fmt.Sprintf("hargaSatuan pada index %d harus bilangan positif", i)
+		}
+	}
+	return true, ""
 }
 
 func TentukanStatus(total float64) string {
-	panic("belum diimplementasikan")
+	if total > 1000000 {
+		return "Prioritas"
+	}
+	if total > 100000 {
+		return "Reguler"
+	}
+	return "Hemat"
 }
 
 func RingkasanPesanan(qty []int, hargaSatuan []float64, tarifPajak float64) string {
-	panic("belum diimplementasikan")
+	subtotal := HitungTotalPesanan(qty, hargaSatuan)
+	diskon := HitungDiskon(subtotal)
+	totalakhir := TotalSetelahDiskon(qty, hargaSatuan, tarifPajak)
+	status := TentukanStatus(totalakhir)
+
+	return fmt.Sprintf(
+		"Subtotal   : Rp%.2f\nDiskon     : Rp%.2f\nTotal Akhir: Rp%.2f\nStatus     : %s\n",
+		subtotal, diskon, totalakhir, status,
+	)
+
 }
 
 // TODO(Level 9): signature ini SUDAH benar (cari tahu sendiri kenapa
