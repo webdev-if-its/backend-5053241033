@@ -135,7 +135,7 @@ func (m *MemoryStore) List() []Task {
 	if len(m.tasks) == 0 {
 		return []Task{}
 	}
-	
+
 	list := make([]Task, len(m.tasks))
 	copy(list, m.tasks)
 	return list
@@ -143,7 +143,15 @@ func (m *MemoryStore) List() []Task {
 
 // Delete menghapus tugas menurut ID. (Level 6)
 func (m *MemoryStore) Delete(id int) error {
-	panic("belum diimplementasikan")
+	for i, t := range m.tasks {
+		if t.ID == id {
+			m.tasks = append(
+				m.tasks[:i],
+				m.tasks[i+1:]...)
+			return nil
+		}
+	}
+	return ErrTugasTidakDitemukan
 }
 
 // Filter mengembalikan elemen xs yang lolos pred. (Level 7)
