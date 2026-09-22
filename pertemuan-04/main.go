@@ -59,7 +59,7 @@ func NewTask(judul string) (Task, error) {
 
 // MarkDone menandai tugas selesai. (Level 2)
 func (t *Task) MarkDone() {
-	panic("belum diimplementasikan")
+	t.Selesai = true
 }
 
 // Rename mengganti judul tugas. (Level 3)
