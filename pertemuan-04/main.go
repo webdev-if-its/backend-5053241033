@@ -64,7 +64,14 @@ func (t *Task) MarkDone() {
 
 // Rename mengganti judul tugas. (Level 3)
 func (t *Task) Rename(judul string) error {
-	panic("belum diimplementasikan")
+	judul = strings.TrimSpace(judul)
+	if judul == "" {
+		return ErrInputKosong
+	}
+
+	t.Judul = judul
+
+	return nil
 }
 
 // String membuat Task memenuhi fmt.Stringer. (Level 10)
