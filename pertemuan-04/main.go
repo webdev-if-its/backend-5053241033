@@ -156,12 +156,22 @@ func (m *MemoryStore) Delete(id int) error {
 
 // Filter mengembalikan elemen xs yang lolos pred. (Level 7)
 func Filter[T any](xs []T, pred func(T) bool) []T {
-	panic("belum diimplementasikan")
+	result := make([]T, 0) // Inisialisasi slice non-nil (bukan nil)
+	for _, v := range xs {
+		if pred(v) {
+			result = append(result, v)
+		}
+	}
+	return result
 }
 
 // Map mengubah tiap elemen xs dengan f. (Level 7)
 func Map[T, U any](xs []T, f func(T) U) []U {
-	panic("belum diimplementasikan")
+	result := make([]U, 0)
+	for _, v := range xs {
+		result = append(result, f(v))
+	}
+	return result
 }
 
 // Contains melaporkan apakah v ada di xs. (Level 8)
