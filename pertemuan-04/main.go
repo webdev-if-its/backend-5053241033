@@ -29,7 +29,7 @@ type Timestamps struct {
 
 // Touch menyetel UpdatedAt ke waktu sekarang. (Level 9)
 func (ts *Timestamps) Touch() {
-	panic("belum diimplementasikan")
+	ts.UpdatedAt = time.Now()
 }
 
 // Task merepresentasikan satu tugas.
@@ -47,19 +47,21 @@ func NewTask(judul string) (Task, error) {
 		return Task{}, ErrInputKosong
 	}
 
-	t := Task{
+	now := time.Now()
+	return Task{
 		Judul: judul,
 		Timestamps: Timestamps{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
-	}
-	return t, nil
+	}, nil
+
 }
 
 // MarkDone menandai tugas selesai. (Level 2)
 func (t *Task) MarkDone() {
 	t.Selesai = true
+	t.Touch()
 }
 
 // Rename mengganti judul tugas. (Level 3)
@@ -70,7 +72,7 @@ func (t *Task) Rename(judul string) error {
 	}
 
 	t.Judul = judul
-
+	t.Touch()
 	return nil
 }
 
