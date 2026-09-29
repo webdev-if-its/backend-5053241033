@@ -176,12 +176,27 @@ func Map[T, U any](xs []T, f func(T) U) []U {
 
 // Contains melaporkan apakah v ada di xs. (Level 8)
 func Contains[T comparable](xs []T, v T) bool {
-	panic("belum diimplementasikan")
+	for _, x := range xs {
+		if x == v {
+			return true
+		}
+	}
+	return false
 }
 
 // Max mengembalikan elemen terbesar di xs. (Level 8)
 func Max[T cmp.Ordered](xs []T) (T, error) {
-	panic("belum diimplementasikan")
+	if len(xs) == 0 {
+		var nol T
+		return nol, ErrDaftarKosong
+	}
+	maks := xs[0] // mulai dari elemen pertama, bukan 0
+	for _, x := range xs[1:] {
+		if x > maks {
+			maks = x
+		}
+	}
+	return maks, nil
 }
 
 // Gabung menyambung String() tiap elemen dengan pemisah sep. (Level 10)
