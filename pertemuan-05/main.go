@@ -46,7 +46,11 @@ func Jalankan(fn func()) {
 // JalankanN menjalankan fn(0) ... fn(n-1), masing-masing di goroutine sendiri,
 // dan LANGSUNG kembali (tidak menunggu). (Level 2)
 func JalankanN(n int, fn func(i int)) {
-	panic("belum diimplementasikan")
+	for i := 0; i < n; i++ {
+		go func(idx int) {
+			fn(idx)
+		}(i)
+	}
 }
 
 // Unduh mensimulasikan satu unduhan. (Level 3)
