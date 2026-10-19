@@ -38,6 +38,7 @@ func (a *API) Routes() *http.ServeMux {
 	mux.HandleFunc("GET /tasks", a.listTasks)
 	mux.HandleFunc("POST /tasks", a.createTask)
 	mux.HandleFunc("GET /tasks/{id}", a.getTask)
+	mux.HandleFunc("PUT /tasks/{id}", a.updateTask)
 	return mux
 }
 
@@ -104,7 +105,30 @@ func (a *API) getTask(w http.ResponseWriter, r *http.Request) {
 
 // PUT /tasks/{id}
 func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
-	panic("belum diimplementasikan")
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "id harus berupa angka", http.StatusBadRequest)
+		return
+	}
+
+	var in taskInput
+	err = json.NewDecoder(r.Body).Decode(&in)
+	if err != nil {
+		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
+		return
+	}
+
+	task, err := a.store.Update(Task{
+		ID:      id,
+		Judul:   in.Judul,
+		Selesai: in.Selesai,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, task)
 }
 
 // DELETE /tasks/{id}
