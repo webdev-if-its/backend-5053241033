@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 // TODO: lihat SOAL.md untuk kontrak lengkap. Ganti setiap "panic" dengan
@@ -36,6 +37,7 @@ func (a *API) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /tasks", a.listTasks)
 	mux.HandleFunc("POST /tasks", a.createTask)
+	mux.HandleFunc("GET /tasks/{id}", a.getTask)
 	return mux
 }
 
@@ -85,7 +87,19 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 
 // GET /tasks/{id}
 func (a *API) getTask(w http.ResponseWriter, r *http.Request) {
-	panic("belum diimplementasikan")
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "id harus berupa angka", http.StatusBadRequest)
+		return
+	}
+
+	task, err := a.store.Get(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, task)
 }
 
 // PUT /tasks/{id}
