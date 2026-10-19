@@ -35,6 +35,7 @@ func NewAPI(store TaskStore) *API {
 func (a *API) Routes() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /tasks", a.listTasks)
+	mux.HandleFunc("POST /tasks", a.createTask)
 	return mux
 }
 
@@ -62,7 +63,24 @@ func (a *API) listTasks(w http.ResponseWriter, r *http.Request) {
 
 // POST /tasks
 func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
-	panic("belum diimplementasikan")
+	var in taskInput
+
+	err := json.NewDecoder(r.Body).Decode(&in)
+	if err != nil {
+		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
+		return
+	}
+
+	task, err := a.store.Add(Task{
+		Judul:   in.Judul,
+		Selesai: in.Selesai,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, task)
 }
 
 // GET /tasks/{id}
