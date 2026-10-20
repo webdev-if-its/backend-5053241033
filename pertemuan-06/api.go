@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -68,8 +69,9 @@ func writeError(w http.ResponseWriter, err error) {
 	case errors.Is(err, errBodyTidakJSON):
 		writeJSON(w, http.StatusBadRequest, errorBody{Error: errBodyTidakJSON.Error()})
 	default:
-		// Level 8 belum dikerjakan: pesan mentah masih dikirim ke klien.
-		writeJSON(w, http.StatusInternalServerError, errorBody{Error: err.Error()})
+		// Detail asli hanya dicatat di log server, klien cukup dapat pesan generik.
+		log.Printf("error internal: %v", err)
+		writeJSON(w, http.StatusInternalServerError, errorBody{Error: "terjadi kesalahan internal"})
 	}
 }
 
