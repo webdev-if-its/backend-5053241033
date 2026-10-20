@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 // TODO: lihat SOAL.md untuk kontrak lengkap. Ganti setiap "panic" dengan
@@ -74,6 +75,10 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
 		return
 	}
+	if strings.TrimSpace(in.Judul) == "" {
+		http.Error(w, "input tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
 
 	task, err := a.store.Add(Task{
 		Judul:   in.Judul,
@@ -83,7 +88,6 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	writeJSON(w, http.StatusCreated, task)
 }
 
@@ -118,6 +122,10 @@ func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
 		return
 	}
+	if strings.TrimSpace(in.Judul) == "" {
+		http.Error(w, "input tidak boleh kosong", http.StatusBadRequest)
+		return
+	}
 
 	task, err := a.store.Update(Task{
 		ID:      id,
@@ -125,6 +133,16 @@ func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 		Selesai: in.Selesai,
 	})
 	if err != nil {
+		if err == ErrTugasTidakDitemukan {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
+		}
+
+		if err == ErrInputKosong {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
