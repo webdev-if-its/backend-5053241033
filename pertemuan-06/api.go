@@ -2,14 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 )
-
-// TODO: lihat SOAL.md untuk kontrak lengkap. Ganti setiap "panic" dengan
-// implementasi yang benar; tambahkan import (encoding/json, errors, log,
-// strconv, ...) sendiri kalau dibutuhkan.
 
 // taskInput adalah bentuk JSON yang boleh dikirim klien untuk POST/PUT.
 // Sengaja TIDAK memuat ID -- ID bukan urusan klien.
@@ -22,6 +19,12 @@ type taskInput struct {
 type errorBody struct {
 	Error string `json:"error"`
 }
+
+// Error khusus lapisan HTTP (400 Bad Request).
+var (
+	errIDBukanAngka  = errors.New("id harus berupa angka")
+	errBodyTidakJSON = errors.New("body bukan JSON yang valid")
+)
 
 // API menyatukan routing dan handler HTTP di atas sebuah TaskStore.
 type API struct {
@@ -53,8 +56,21 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 // writeError menerjemahkan error aplikasi menjadi status + body errorBody.
+// Memakai errors.Is supaya error yang dibungkus (%w) tetap dikenali.
 func writeError(w http.ResponseWriter, err error) {
-	panic("belum diimplementasikan")
+	switch {
+	case errors.Is(err, ErrTugasTidakDitemukan):
+		writeJSON(w, http.StatusNotFound, errorBody{Error: ErrTugasTidakDitemukan.Error()})
+	case errors.Is(err, ErrInputKosong):
+		writeJSON(w, http.StatusBadRequest, errorBody{Error: ErrInputKosong.Error()})
+	case errors.Is(err, errIDBukanAngka):
+		writeJSON(w, http.StatusBadRequest, errorBody{Error: errIDBukanAngka.Error()})
+	case errors.Is(err, errBodyTidakJSON):
+		writeJSON(w, http.StatusBadRequest, errorBody{Error: errBodyTidakJSON.Error()})
+	default:
+		// Level 8 belum dikerjakan: pesan mentah masih dikirim ke klien.
+		writeJSON(w, http.StatusInternalServerError, errorBody{Error: err.Error()})
+	}
 }
 
 // GET /tasks
@@ -69,14 +85,12 @@ func (a *API) listTasks(w http.ResponseWriter, r *http.Request) {
 // POST /tasks
 func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 	var in taskInput
-
-	err := json.NewDecoder(r.Body).Decode(&in)
-	if err != nil {
-		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		writeError(w, errBodyTidakJSON)
 		return
 	}
 	if strings.TrimSpace(in.Judul) == "" {
-		http.Error(w, "input tidak boleh kosong", http.StatusBadRequest)
+		writeError(w, ErrInputKosong)
 		return
 	}
 
@@ -85,7 +99,7 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 		Selesai: in.Selesai,
 	})
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusCreated, task)
@@ -95,16 +109,15 @@ func (a *API) createTask(w http.ResponseWriter, r *http.Request) {
 func (a *API) getTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "id harus berupa angka", http.StatusBadRequest)
+		writeError(w, errIDBukanAngka)
 		return
 	}
 
 	task, err := a.store.Get(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		writeError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, task)
 }
 
@@ -112,18 +125,17 @@ func (a *API) getTask(w http.ResponseWriter, r *http.Request) {
 func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "id harus berupa angka", http.StatusBadRequest)
+		writeError(w, errIDBukanAngka)
 		return
 	}
 
 	var in taskInput
-	err = json.NewDecoder(r.Body).Decode(&in)
-	if err != nil {
-		http.Error(w, "body bukan JSON yang valid", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		writeError(w, errBodyTidakJSON)
 		return
 	}
 	if strings.TrimSpace(in.Judul) == "" {
-		http.Error(w, "input tidak boleh kosong", http.StatusBadRequest)
+		writeError(w, ErrInputKosong)
 		return
 	}
 
@@ -133,20 +145,9 @@ func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 		Selesai: in.Selesai,
 	})
 	if err != nil {
-		if err == ErrTugasTidakDitemukan {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		if err == ErrInputKosong {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		writeError(w, err)
 		return
 	}
-
 	writeJSON(w, http.StatusOK, task)
 }
 
@@ -154,15 +155,13 @@ func (a *API) updateTask(w http.ResponseWriter, r *http.Request) {
 func (a *API) deleteTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "id harus berupa angka", http.StatusBadRequest)
+		writeError(w, errIDBukanAngka)
 		return
 	}
 
-	err = a.store.Delete(id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+	if err := a.store.Delete(id); err != nil {
+		writeError(w, err)
 		return
 	}
-
 	w.WriteHeader(http.StatusNoContent)
 }
