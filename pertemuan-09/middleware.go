@@ -16,7 +16,10 @@ type Middleware func(http.Handler) http.Handler
 // Chain membungkus h dengan mws. Urutan: middleware PERTAMA di daftar adalah
 // yang PALING LUAR (dijalankan paling dulu saat request masuk). (Level 3)
 func Chain(h http.Handler, mws ...Middleware) http.Handler {
-	panic("belum diimplementasikan")
+	for i := len(mws) - 1; i >= 0; i-- {
+		h = mws[i](h)
+	}
+	return h
 }
 
 // statusRecorder membungkus ResponseWriter untuk mengingat status code yang
