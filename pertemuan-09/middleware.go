@@ -107,5 +107,5 @@ func RequireJSON(next http.Handler) http.Handler {
 // NewHandler menyusun API + seluruh middleware menjadi satu http.Handler yang
 // siap dipakai server. (Level 10)
 func NewHandler(store TaskStore) http.Handler {
-	panic("belum diimplementasikan")
+	return Chain(NewAPI(store).Routes(), Logging, Recover, RequireJSON)
 }
