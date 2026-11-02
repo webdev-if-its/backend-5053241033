@@ -68,7 +68,14 @@ func Logging(next http.Handler) http.Handler {
 // Recover menangkap panic dari handler di bawahnya: catat ke log (pesan +
 // stack trace), balas 500 JSON generik. (Level 4-6)
 func Recover(next http.Handler) http.Handler {
-	panic("belum diimplementasikan")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if rec := recover(); rec != nil {
+				writeJSON(w, http.StatusInternalServerError, errorBody{Error: "terjadi kesalahan internal"})
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 
 // RequireJSON menolak POST/PUT/PATCH yang Content-Type-nya bukan
