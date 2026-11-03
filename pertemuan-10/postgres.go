@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // mendaftarkan driver "pgx" untuk database/sql
@@ -88,7 +89,21 @@ func (s *PostgresStore) Migrate() error {
 
 // Add menyimpan tugas baru; ID dibuat oleh database. (Level 3)
 func (s *PostgresStore) Add(t Task) (Task, error) {
-	panic("belum diimplementasikan")
+	t.Judul = strings.TrimSpace(t.Judul)
+	if t.Judul == "" {
+		return Task{}, ErrInputKosong
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `INSERT INTO tasks (judul, selesai) VALUES ($1, $2) RETURNING id`
+	err := s.db.QueryRowContext(ctx, query, t.Judul, t.Selesai).Scan(&t.ID)
+	if err != nil {
+		return Task{}, fmt.Errorf("add task: %w", err)
+	}
+
+	return t, nil
 }
 
 // Get mengambil satu tugas menurut ID. (Level 4)
