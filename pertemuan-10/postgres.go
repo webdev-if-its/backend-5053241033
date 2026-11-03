@@ -64,7 +64,26 @@ func NewPostgresStore(db *sql.DB) *PostgresStore {
 // Migrate membuat tabel tasks dan task_logs kalau belum ada. Aman dipanggil
 // berkali-kali. (Level 2)
 func (s *PostgresStore) Migrate() error {
-	panic("belum diimplementasikan")
+	query := `
+	CREATE TABLE IF NOT EXISTS tasks (
+		id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		judul   TEXT NOT NULL,
+		selesai BOOLEAN NOT NULL DEFAULT FALSE
+	);
+	CREATE TABLE IF NOT EXISTS task_logs (
+		id      INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+		task_id INT NOT NULL,
+		aksi    TEXT NOT NULL,
+		waktu   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+	);
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	if _, err := s.db.ExecContext(ctx, query); err != nil {
+		return fmt.Errorf("migrate gagal: %w", err)
+	}
+	return nil
 }
 
 // Add menyimpan tugas baru; ID dibuat oleh database. (Level 3)
