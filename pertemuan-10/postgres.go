@@ -188,7 +188,6 @@ func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
 		return []Task{}, nil
 	}
 
-	// Validasi awal semua judul
 	trimmed := make([]string, len(judul))
 	for i, j := range judul {
 		j = strings.TrimSpace(j)
@@ -201,7 +200,13 @@ func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	stmt, err := s.db.PrepareContext(ctx, `INSERT INTO tasks (judul) VALUES ($1) RETURNING id, judul, selesai`)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx tambah banyak: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `INSERT INTO tasks (judul) VALUES ($1) RETURNING id, judul, selesai`)
 	if err != nil {
 		return nil, fmt.Errorf("prepare tambah banyak: %w", err)
 	}
@@ -217,8 +222,8 @@ func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
 		hasil = append(hasil, t)
 	}
 
-	if hasil == nil {
-		return []Task{}, nil
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit tambah banyak: %w", err)
 	}
 
 	return hasil, nil
@@ -234,9 +239,8 @@ func (s *PostgresStore) Delete(id int) error {
 	if err != nil {
 		return fmt.Errorf("begin tx delete: %w", err)
 	}
-	defer tx.Rollback() // aman dipanggil meskipun sudah committed
+	defer tx.Rollback()
 
-	// 1. Hapus tugas dari tabel tasks
 	res, err := tx.ExecContext(ctx, `DELETE FROM tasks WHERE id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("delete task exec: %w", err)
@@ -250,7 +254,6 @@ func (s *PostgresStore) Delete(id int) error {
 		return ErrTugasTidakDitemukan
 	}
 
-	// 2. Catat log penghapusan ke task_logs
 	_, err = tx.ExecContext(ctx, `INSERT INTO task_logs (task_id, aksi) VALUES ($1, 'hapus')`, id)
 	if err != nil {
 		return fmt.Errorf("insert task log: %w", err)
