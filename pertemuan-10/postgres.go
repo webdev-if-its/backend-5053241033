@@ -184,7 +184,44 @@ func (s *PostgresStore) Update(t Task) (Task, error) {
 // TambahBanyak menyimpan banyak tugas sekaligus memakai satu prepared
 // statement. (Level 6 -- atomik di Level 8)
 func (s *PostgresStore) TambahBanyak(judul []string) ([]Task, error) {
-	panic("belum diimplementasikan")
+	if len(judul) == 0 {
+		return []Task{}, nil
+	}
+
+	// Validasi awal semua judul
+	trimmed := make([]string, len(judul))
+	for i, j := range judul {
+		j = strings.TrimSpace(j)
+		if j == "" {
+			return nil, ErrInputKosong
+		}
+		trimmed[i] = j
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	stmt, err := s.db.PrepareContext(ctx, `INSERT INTO tasks (judul) VALUES ($1) RETURNING id, judul, selesai`)
+	if err != nil {
+		return nil, fmt.Errorf("prepare tambah banyak: %w", err)
+	}
+	defer stmt.Close()
+
+	var hasil []Task
+	for _, j := range trimmed {
+		var t Task
+		err := stmt.QueryRowContext(ctx, j).Scan(&t.ID, &t.Judul, &t.Selesai)
+		if err != nil {
+			return nil, fmt.Errorf("exec tambah banyak: %w", err)
+		}
+		hasil = append(hasil, t)
+	}
+
+	if hasil == nil {
+		return []Task{}, nil
+	}
+
+	return hasil, nil
 }
 
 // Delete menghapus tugas dan mencatat aksinya ke task_logs DALAM SATU
